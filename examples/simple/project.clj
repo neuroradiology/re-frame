@@ -1,31 +1,31 @@
-(defproject simple "0.9.0"
-  :dependencies [[org.clojure/clojure        "1.8.0"]
-                 [org.clojure/clojurescript  "1.9.227"]
-                 [reagent  "0.6.0-rc"]
-                 [re-frame "0.9.0"]]
+(defproject simple "lein-git-inject/version"
 
-  :plugins [[lein-cljsbuild "1.1.3"]
-            [lein-figwheel  "0.5.4-7"]]
+  :dependencies [[org.clojure/clojure       "1.10.1"]
+                 [org.clojure/clojurescript "1.10.597"
+                  :exclusions [com.google.javascript/closure-compiler-unshaded
+                               org.clojure/google-closure-library
+                               org.clojure/google-closure-library-third-party]]
+                 [thheller/shadow-cljs      "2.8.83"]
+                 [reagent                   "0.10.0"]
+                 [re-frame                  "RELEASE"]]
 
-  :hooks [leiningen.cljsbuild]
+  :plugins      [[day8/lein-git-inject "0.0.11"]
+                 [lein-shadow          "0.1.7"]]
 
-  :profiles {:dev {:cljsbuild
-                   {:builds {:client {:figwheel     {:on-jsload "simple.core/run"}
-                                      :compiler     {:main "simple.core"
-                                                     :asset-path "js"
-                                                     :optimizations :none
-                                                     :source-map true
-                                                     :source-map-timestamp true}}}}}
+  :middleware   [leiningen.git-inject/middleware]
 
-             :prod {:cljsbuild
-                    {:builds {:client {:compiler    {:optimizations :advanced
-                                                     :elide-asserts true
-                                                     :pretty-print false}}}}}}
+  :clean-targets ^{:protect false} [:target-path
+                                    "shadow-cljs.edn"
+                                    "package.json"
+                                    "package-lock.json"
+                                    "resources/public/js"]
 
-  :figwheel {:repl false}
+  :shadow-cljs {:nrepl  {:port 8777}
 
-  :clean-targets ^{:protect false} ["resources/public/js"]
+                :builds {:client {:target     :browser
+                                  :output-dir "resources/public/js"
+                                  :modules    {:client {:init-fn simple.core/run}}
+                                  :devtools   {:http-root "resources/public"
+                                               :http-port 8280}}}}
 
-  :cljsbuild {:builds {:client {:source-paths ["src"]
-                                :compiler     {:output-dir "resources/public/js"
-                                               :output-to  "resources/public/js/client.js"}}}})
+  :aliases {"dev-auto" ["shadow" "watch" "client"]})

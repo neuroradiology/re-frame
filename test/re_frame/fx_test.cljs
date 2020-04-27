@@ -23,7 +23,7 @@
 
 (deftest dispatch-later
   (let [seen-events (atom [])]
-    ;; Setup and excercise effects handler with :dispatch-later.
+    ;; Setup and exercise effects handler with :dispatch-later.
     (re-frame/reg-event-fx
       ::later-test
       (fn [_world _event-v]
@@ -58,7 +58,7 @@
     (try
       (log/set-loggers! {:error log-fn})
       (re-frame/dispatch-sync [::missing-handler-test])
-      (is (re-matches #"re-frame: no :fx handler registered for::fx-not-exist" (first @logs)))
+      (is (re-matches #"re-frame: no handler registered for effect::fx-not-exist. Ignoring." (first @logs)))
       (is (= (count @logs) 1))
       (finally
         (log/set-loggers! original-loggers)))))

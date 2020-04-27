@@ -1,25 +1,34 @@
-(defproject re-frame "0.9.2-SNAPSHOT"
-  :description  "A Clojurescript MVC-like Framework For Writing SPAs Using Reagent."
-  :url          "https://github.com/Day8/re-frame.git"
+(defproject     re-frame "lein-git-inject/version"
+  :description  "A ClojureScript MVC-like Framework For Writing SPAs Using Reagent."
+  :url          "https://github.com/day8/re-frame.git"
   :license      {:name "MIT"}
-  :dependencies [[org.clojure/clojure        "1.8.0"]
-                 [org.clojure/clojurescript  "1.9.227"]
-                 [reagent                    "0.6.0-rc"]
-                 [org.clojure/tools.logging  "0.3.1"]]
+
+  :dependencies [[org.clojure/clojure       "1.10.1"   :scope "provided"]
+                 [org.clojure/clojurescript "1.10.597" :scope "provided"
+                  :exclusions [com.google.javascript/closure-compiler-unshaded
+                               org.clojure/google-closure-library
+                               org.clojure/google-closure-library-third-party]]
+                 [thheller/shadow-cljs      "2.8.83"   :scope "provided"]
+                 [reagent                   "0.10.0"]
+                 [net.cgrand/macrovich      "0.2.1"]
+                 [org.clojure/tools.logging "0.4.1"]]
+
+  :plugins      [[day8/lein-git-inject "0.0.11"]
+                 [lein-shadow          "0.1.7"]]
+
+  :middleware   [leiningen.git-inject/middleware]
+
+  :git-inject {:version-pattern #"v(\d+\.\d+\.\d+.*)"}
 
   :profiles {:debug {:debug true}
-             :dev   {:dependencies [[karma-reporter            "1.0.1"]
-                                    [binaryage/devtools        "0.8.1"]]
-                     :plugins      [[lein-ancient              "0.6.10"]
-                                    [lein-cljsbuild            "1.1.4"]
-                                    [lein-npm                  "0.6.2"]
-                                    [lein-figwheel             "0.5.6"]
-                                    [lein-shell                "0.5.0"]]}}
+             :dev   {:dependencies [[binaryage/devtools "0.9.11"]]
+                     :plugins      [[lein-ancient       "0.6.15"]
+                                    [lein-shell         "0.5.0"]]}}
 
   :clean-targets  [:target-path "run/compiled"]
 
   :resource-paths ["run/resources"]
-  :jvm-opts       ["-Xmx1g" "-XX:+UseConcMarkSweepGC"]
+  :jvm-opts       ["-Xmx1g"]
   :source-paths   ["src"]
   :test-paths     ["test"]
 
@@ -27,44 +36,56 @@
                                       :macosx  "open"
                                       :linux   "xdg-open"}}}
 
-  :deploy-repositories [["releases"  {:sign-releases false :url "https://clojars.org/repo"}]
-                        ["snapshots" {:sign-releases false :url "https://clojars.org/repo"}]]
+  :deploy-repositories [["clojars" {:sign-releases false
+                                    :url "https://clojars.org/repo"
+                                    :username :env/CLOJARS_USERNAME
+                                    :password :env/CLOJARS_PASSWORD}]]
 
-  :release-tasks [["vcs" "assert-committed"]
-                  ["change" "version" "leiningen.release/bump-version" "release"]
-                  ["vcs" "commit"]
-                  ["vcs" "tag" "v" "--no-sign"]
-                  ["deploy"]
-                  ["change" "version" "leiningen.release/bump-version"]
-                  ["vcs" "commit"]
-                  ["vcs" "push"]]
+  :release-tasks [["deploy" "clojars"]]
 
-  :npm {:dependencies [[karma                 "1.0.0"]
-                       [karma-cljs-test       "0.1.0"]
-                       [karma-chrome-launcher "0.2.0"]
-                       [karma-junit-reporter  "0.3.8"]]}
+  :shadow-cljs {:nrepl  {:port 8777}
 
-  :cljsbuild {:builds [{:id           "test"
-                        :source-paths ["test" "src"]
-                        :compiler     {:preloads        [devtools.preload]
-                                       :external-config {:devtools/config {:features-to-install [:formatters :hints]}}
-                                       :output-to     "run/compiled/browser/test.js"
-                                       :source-map    true
-                                       :output-dir    "run/compiled/browser/test"
-                                       :optimizations :none
-                                       :source-map-timestamp true
-                                       :pretty-print  true}}
-                       {:id           "karma"
-                        :source-paths ["test" "src"]
-                        :compiler     {:output-to     "run/compiled/karma/test.js"
-                                       :source-map    "run/compiled/karma/test.js.map"
-                                       :output-dir    "run/compiled/karma/test"
-                                       :optimizations :whitespace
-                                       :main          "re_frame.test_runner"
-                                       :pretty-print  true
-                                       :closure-defines {"re_frame.trace.trace_enabled_QMARK_" true}}}]}
+                :builds {:browser-test
+                         {:target           :browser-test
+                          :ns-regexp        "re-frame\\..*-test$"
+                          :test-dir         "run/compiled/browser/test"
+                          :compiler-options {:pretty-print                       true
+                                             :external-config                    {:devtools/config {:features-to-install [:formatters :hints]}}}
+                          :devtools         {:http-port 3449
+                                             :http-root "run/compiled/browser/test"
+                                             :preloads  [devtools.preload]}}
 
-  :aliases {"test-once"   ["do" "clean," "cljsbuild" "once" "test," "shell" "open" "test/test.html"]
-            "test-auto"   ["do" "clean," "cljsbuild" "auto" "test,"]
-            "karma-once"  ["do" "clean," "cljsbuild" "once" "karma,"]
-            "karma-auto"  ["do" "clean," "cljsbuild" "auto" "karma,"]})
+                         :karma-test
+                         {:target           :karma
+                          :ns-regexp        "re-frame\\..*-test$"
+                          :output-to        "run/compiled/karma/test/test.js"
+                          :compiler-options {:pretty-print                       true
+                                             :closure-defines                    {re-frame.trace.trace-enabled? true}}}}}
+
+  :aliases {"test-once"   ["do" "clean," "shadow" "compile" "browser-test," "shell" "open" "run/compiled/browser/test/index.html"]
+            "test-auto"   ["do" "clean," "shadow" "watch" "browser-test,"]
+            "karma-once"  ["do"
+                           ["clean"]
+                           ["shadow" "compile" "karma-test"]
+                           ["shell" "karma" "start" "--single-run" "--reporters" "junit,dots"]]
+            "karma-auto"  ["do" "clean," "shadow" "watch" "karma-test,"]
+            ;; NOTE: In order to compile docs you would need to install
+            ;; gitbook-cli(2.3.2) utility globaly using npm or yarn
+            "docs-serve" ^{:doc "Runs the development server of docs with live reloading"} ["shell" "gitbook" "serve" "./" "./build/re-frame/"]
+            "docs-build" ^{:doc "Builds the HTML version of docs"} ["shell" "gitbook" "build" "./" "./build/re-frame/"]
+            ;; NOTE: Calibre and svgexport(0.3.2) are needed to build below
+            ;; formats of docs. Install svgexpor3t using npm or yarn.
+            "docs-pdf"  ^{:doc "Builds the PDF version of docs"}
+            ["do"
+             ["shell" "mkdir" "-p" "./build/"]
+             ["shell" "gitbook" "pdf" "./" "./build/re-frame.pdf"]]
+
+            "docs-mobi" ^{:doc "Builds the MOBI version of docs"}
+            ["do"
+             ["shell" "mkdir" "-p" "./build/"]
+             ["shell" "gitbook" "mobi" "./" "./build/re-frame.mobi"]]
+
+            "docs-epub" ^{:doc "Builds the EPUB version of docs"}
+            ["do"
+             ["shell" "mkdir" "-p" "./build/"]
+             ["shell" "gitbook" "epub" "./" "./build/re-frame.epub"]]})

@@ -1,27 +1,13 @@
+>  The methods described in this page are now out of date. Included for historical reasons only.  
+> [re-frame-10x](https://github.com/day8/re-frame-10x) is now our recommeded tool. 
+
+---
+
 ## Debugging
 
 This page describes a technique for 
 debugging re-frame apps. It proposes a particular combination 
 of tools.
-
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table Of Contents
-
-- [Know The Beast!](#know-the-beast)
-- [re-frame's Step 3](#re-frames-step-3)
-- [Observe The Beast](#observe-the-beast)
-- [How To Trace?](#how-to-trace)
-- [Your browser](#your-browser)
-- [Your Project](#your-project)
-- [Say No To Anonymous](#say-no-to-anonymous)
-- [IMPORTANT](#important)
-- [The result](#the-result)
-- [Warning](#warning)
-- [React Native](#react-native)
-- [Appendix A - Prior to V0.8.0](#appendix-a---prior-to-v080)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Know The Beast!
 
@@ -29,7 +15,7 @@ re-frame apps are **event driven**.
 
 Event driven apps have this core, perpetual loop:
    1. your app is in some quiescent state, patiently waiting for the next event
-   2. an event arrives (user presses a button, a websocket gets data, etc)
+   2. an event arrives (because the user presses a button, a websocket gets data, etc)
    3. computation/processing follows as the event is handled, leading to changes in app state, the UI, etc
    4. Goto 1
 
@@ -37,20 +23,15 @@ When debugging an event driven system, our focus will be step 3.
 
 ## re-frame's Step 3
 
-With re-frame, step 3 happens like this: 
+With re-frame, step 3 happens like a **domino sequence**: an event arrives and 
+then bang, bang, bang, one domino triggers the next:
+  - Event dispatch
+  - Event handling
+  - Effects handling 
+  - subscription handlers
+  - view functions
 
-> 3.1. a `(dispatch [:event-id ....])` happens  (that's how events are initiated)
-
-> 3.2. an `Event Handler` is run (along with interceptors), changing the value in `app-db`.
-
-> 3.3. one or more `subscriptions` fire (because of 3.2)
-
-> 3.4. `components` rerender (because of 3.3)
-  
-Every single event is processed in the same way.  Every single one. 
-
-It is like a **four domino sequence**: an event arrives and 
-then bang, bang, bang, one domino triggers the next. A delightfully 
+Every single event is processed in the same way.  Every single one.  A delightfully 
 regular environment to understand and debug!
 
 ## Observe The Beast
@@ -58,7 +39,7 @@ regular environment to understand and debug!
 Bret Victor has explained to us the importance of **observability**.
 In which case, when we are debugging re-frame, what do we want to observe?
 
-re-frame's four domino process involves *data values flowing in 
+re-frame's domino process involves *data values flowing in 
 and out of relatively simple, pure functions*.  Derived data flowing. 
 So, to debug we want to observe:
   - which functions are called
@@ -81,7 +62,7 @@ Below, I suggest a particular combination of technologies which, working togethe
 will write a trace to the devtools console. Sorry, but there's no fancy 
 SVG dashboard.  We said simple, right?
 
-First, use clairvoyant to trace function calls and data flow. We've had 
+First, use `clairvoyant` to trace function calls and data flow. We've had 
 a couple of Clairvoyant PRs accepted, and they make it work well for us.
 We've also written a specific Clairvoyant tracer tuned for our re-frame 
 needs. https://clojars.org/day8/re-frame-tracer. 
@@ -107,39 +88,39 @@ Then the customised tracer for cljs-devtools that includes a colour choice
 [![Clojars Project](http://clojars.org/day8/re-frame-tracer/latest-version.svg)](http://clojars.org/day8/re-frame-tracer)
 
 
-Next, we're going to assume that you have structured you app in the [recommended way](https://github.com/Day8/re-frame/tree/master/examples/todomvc/src/todomvc),
+Next, we're going to assume that you have structured you app in the [recommended way](https://github.com/day8/re-frame/tree/master/examples/todomvc/src/todomvc),
 meaning you have the namespaces `events.cljs`, `subs.cljs` and `views.cljs`.
 It is the functions within these namespaces that we wish to trace.  
 
 1. At the top of each add these namespaces, add these requires:
 
-   ```cljs
-    [clairvoyant.core :refer-macros [trace-forms]]
-    [re-frame-tracer.core :refer [tracer]]
-   ```
+```clojure
+ [clairvoyant.core :refer-macros [trace-forms]]
+ [re-frame-tracer.core :refer [tracer]]
+```
 
 2. Then, immediately after the `ns` form add (if you want a green colour):
 
-   ```cljs
-   (trace-forms {:tracer (tracer :color "green")}
-   ```
+```clojure
+ (trace-forms {:tracer (tracer :color "green")}
+```
 
 3. Finally, put in a closing `)` at the end of the file. Now all functions within the 
-`ns` will be traced.  It that is too noisy -- perhaps you won't want to trace all the helper functions --
+`ns` will be traced.  If that is too noisy -- perhaps you won't want to trace all the helper functions --
 then you can move the wrapping macros `trace-froms`
 around to suit your needs.
 
 4. Colour choice
 
-   We have sauntered in the direction of the following colours
+We have sauntered in the direction of the following colours
 
-   |    file      | colour|
-   |--------------|-------|
-   |`handlers.clj`| green |
-   |`subs.cljs`   | brown |
-   |`views.clj`   | gold  |
+|    file      | colour|
+|--------------|-------|
+|`handlers.clj`| green |
+|`subs.cljs`   | brown |
+|`views.clj`   | gold  |
 
-   But I still think orange, flared pants are a good look.  So, yeah.  You may end up choosing others. 
+But I still think orange, flared pants are a good look.  So, yeah.  You may end up choosing others. 
 
 
 ## Say No To Anonymous
@@ -148,7 +129,8 @@ To get good quality tracing, you need to provide names for all
 your functions.  So, don't let handlers be anonymous when registering them. 
 
 For example, make sure you name the renderer in a Form2 component:
-```clj
+
+```clojure
 (defn my-view
   []
   (let [name   (subscribe [:name])]
@@ -157,6 +139,7 @@ For example, make sure you name the renderer in a Form2 component:
 ```
 
 And name those event handlers:
+
 ```clj
 (reg-event-db
   :blah
@@ -172,13 +155,14 @@ And name those event handlers:
 
 You must throw a compile-time switch for tracing to be included into development builds. 
 
-If you are using lein, do this in your `project.clj` file:
+If you are using `lein`, do this in your `project.clj` file:
 
 ```clj
 :cljsbuild {:builds [{:id "dev"            ;; for the development build, turn on tracing
                       ....
-                      :closure-defines {"clairvoyant.core.devmode" true}
-                      }]}
+                      :compiler {
+                          :closure-defines {"clairvoyant.core.devmode" true}
+                      }}]}
 ```
 
 So, just to be clear, if you see no tracing when you are debugging, it 
@@ -198,12 +182,12 @@ Do you see the dominos?
 
 If the functions you are tracing take large data-structures as parameters, or 
 return large values, then you will be asking clairvoyant to push/log a LOT 
-of data into the js/console. This can take a while and might mean devtools 
+of data into the `js/console`. This can take a while and might mean devtools 
 takes a lot of RAM.  
 
 For example, if your `app-db` was big and complicated, you might use `path` 
 middleware to "narrow" that part of `app-db` passed into your event handler 
-because logging all of `app-db` to js/console might take a while (and not 
+because logging all of `app-db` to `js/console` might take a while (and not 
 be that useful).
 
 
@@ -218,12 +202,12 @@ Enable **Debug JS Remotely** to fix this.
 
 ## Appendix A - Prior to V0.8.0
 
-If you are using v0.8.0 or later, then you can probably ignore this section.
+If you are using v0.8.0 or later, then you can ignore this section.
 
 Prior to v0.8.0, subscriptions were done using `re-frame.core/reg-sub-raw`, 
 instead of `re-frame.core/reg-sub` (which is now the preferred method). 
 
-Details of the changes can [be found here](https://github.com/Day8/re-frame/blob/master/CHANGES.md#080--20160819).
+Details of the changes can [be found here](https://github.com/day8/re-frame/blob/master/CHANGES.md#080--20160819).
 
 When using `re-frame.core/reg-sub-raw`, you must explicitly use `reaction`.  And 
 unfortunately both `trace-forms` and `reaction` are macros and they don't work well together.
@@ -232,7 +216,7 @@ you need to replace the macro `reaction` with the function `make-reaction`.
 
 Do the following code:
 
-```cljs
+```clj
 (ns my.ns
  (:require-macros [reagent.ratom :refer [reaction]]))
 
@@ -247,7 +231,7 @@ Do the following code:
 
 needs to become
 
-```cljs
+```clj
 (ns my.ns
  (:require [reagent.ratom :refer [make-reaction]]))
 
@@ -420,3 +404,8 @@ From @mccraigmccraig we get the following (untested by me, but they look great):
    (code-push/sync)
    db)
 ```
+
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->

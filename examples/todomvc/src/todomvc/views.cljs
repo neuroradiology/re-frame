@@ -1,26 +1,27 @@
 (ns todomvc.views
   (:require [reagent.core  :as reagent]
-            [re-frame.core :refer [subscribe dispatch]]))
+            [re-frame.core :refer [subscribe dispatch]]
+            [clojure.string :as str]))
 
 
 (defn todo-input [{:keys [title on-save on-stop]}]
-  (let [val (reagent/atom title)
+  (let [val  (reagent/atom title)
         stop #(do (reset! val "")
                   (when on-stop (on-stop)))
-        save #(let [v (-> @val str clojure.string/trim)]
-               (when (seq v) (on-save v))
-               (stop))]
+        save #(let [v (-> @val str str/trim)]
+                (on-save v)
+                (stop))]
     (fn [props]
-      [:input (merge props
-                     {:type "text"
-                      :value @val
-                      :auto-focus true
-                      :on-blur save
-                      :on-change #(reset! val (-> % .-target .-value))
+      [:input (merge (dissoc props :on-save :on-stop :title)
+                     {:type        "text"
+                      :value       @val
+                      :auto-focus  true
+                      :on-blur     save
+                      :on-change   #(reset! val (-> % .-target .-value))
                       :on-key-down #(case (.-which %)
-                                     13 (save)
-                                     27 (stop)
-                                     nil)})])))
+                                      13 (save)
+                                      27 (stop)
+                                      nil)})])))
 
 
 (defn todo-item
@@ -43,7 +44,9 @@
           [todo-input
             {:class "edit"
              :title title
-             :on-save #(dispatch [:save id %])
+             :on-save #(if (seq %)
+                          (dispatch [:save id %])
+                          (dispatch [:delete-todo id]))
              :on-stop #(reset! editing false)}])])))
 
 
@@ -55,7 +58,7 @@
         [:input#toggle-all
           {:type "checkbox"
            :checked all-complete?
-           :on-change #(dispatch [:complete-all-toggle (not all-complete?)])}]
+           :on-change #(dispatch [:complete-all-toggle])}]
         [:label
           {:for "toggle-all"}
           "Mark all as complete"]
@@ -90,7 +93,8 @@
     [todo-input
       {:id "new-todo"
        :placeholder "What needs to be done?"
-       :on-save #(dispatch [:add-todo %])}]])
+       :on-save #(when (seq %)
+                    (dispatch [:add-todo %]))}]])
 
 
 (defn todo-app

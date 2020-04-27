@@ -1,9 +1,10 @@
 (ns simple.core
   (:require [reagent.core :as reagent]
-            [re-frame.core :as rf]))
+            [re-frame.core :as rf]
+            [clojure.string :as str]))
 
-;; A detailed walk-through of this source code is provied in the docs:
-;; https://github.com/Day8/re-frame/blob/master/docs/CodeWalkthrough.md
+;; A detailed walk-through of this source code is provided in the docs:
+;; https://github.com/day8/re-frame/blob/master/docs/CodeWalkthrough.md
 
 ;; -- Domino 1 - Event Dispatch -----------------------------------------------
 
@@ -13,7 +14,7 @@
     (rf/dispatch [:timer now])))  ;; <-- dispatch used
 
 ;; Call the dispatching function every second.
-;; `defonce` is like `def` but it ensures only instance is ever
+;; `defonce` is like `def` but it ensures only one instance is ever
 ;; created in the face of figwheel hot-reloading of this file.
 (defonce do-timer (js/setInterval dispatch-timer-event 1000))
 
@@ -35,7 +36,7 @@
 
 (rf/reg-event-db                 ;; usage:  (dispatch [:timer a-js-Date])
   :timer                         ;; every second an event of this kind will be dispatched
-  (fn [db [_ new-time]]          ;; note how the 2nd parameter is desctructure to obtain the data value
+  (fn [db [_ new-time]]          ;; note how the 2nd parameter is destructured to obtain the data value
     (assoc db :time new-time)))  ;; compute and return the new application state
 
 
@@ -43,9 +44,8 @@
 
 (rf/reg-sub
   :time
-  (fn [db _]     ;; db is current app state. 2nd usused param is query vector
-    (-> db
-        :time)))
+  (fn [db _]     ;; db is current app state. 2nd unused param is query vector
+    (:time db))) ;; return a query computation over the application state
 
 (rf/reg-sub
   :time-color
@@ -61,7 +61,7 @@
    {:style {:color @(rf/subscribe [:time-color])}}
    (-> @(rf/subscribe [:time])
        .toTimeString
-       (clojure.string/split " ")
+       (str/split " ")
        first)])
 
 (defn color-input
@@ -81,9 +81,21 @@
 
 ;; -- Entry Point -------------------------------------------------------------
 
-(defn ^:export run
+(defn render
   []
-  (rf/dispatch-sync [:initialize])     ;; puts a value into application state
-  (reagent/render [ui]              ;; mount the application's ui into '<div id="app" />'
+  (reagent/render [ui]
                   (js/document.getElementById "app")))
 
+(defn ^:dev/after-load clear-cache-and-render!
+  []
+  ;; The `:dev/after-load` metadata causes this function to be called
+  ;; after shadow-cljs hot-reloads code. We force a UI update by clearing
+  ;; the Reframe subscription cache.
+  (rf/clear-subscription-cache!)
+  (render))
+
+(defn run
+  []
+  (rf/dispatch-sync [:initialize]) ;; put a value into application state
+  (render)                         ;; mount the application's ui into '<div id="app" />'
+  )

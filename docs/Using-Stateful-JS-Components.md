@@ -13,20 +13,6 @@ thrill of that forbidden fruit.
 
 I won't tell, if you don't.  But careful plans must be made  ... 
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table Of Contents
-
-- [The overall plan](#the-overall-plan)
-- [Example Using Google Maps](#example-using-google-maps)
-- [Pattern Discovery](#pattern-discovery)
-- [Code Credit](#code-credit)
-- [D3 Examples](#d3-examples)
-- [Advanced Lifecycle Methods](#advanced-lifecycle-methods)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-
 ### The overall plan 
 
 To use a stateful js component, you'll need to write two Reagent components:
@@ -37,7 +23,7 @@ The pattern involves the outer component, which sources data, supplying this dat
 
 ### Example Using Google Maps
 
-```cljs
+```clj
 (defn gmap-inner []
   (let [gmap    (atom nil)
         options (clj->js {"zoom" 9})
@@ -68,6 +54,8 @@ The pattern involves the outer component, which sources data, supplying this dat
 (defn gmap-outer []
   (let [pos (subscribe [:current-position])]   ;; obtain the data
     (fn []
+      ;; Note: @pos is a map here, so it gets passed as props.
+      ;; Non-props values can be accessed via (reagent/argv comp)
       [gmap-inner @pos])))
 ```
 
@@ -100,10 +88,25 @@ D3 (from @zachcp):
   - Code: https://github.com/zachcp/simplecomponent
   - Example: http://zachcp.github.io/simplecomponent/
 
-A different take on using D3: 
-https://gadfly361.github.io/gadfly-blog/2016-10-22-d3-in-reagent.html
+RID3, a reagent interface to D3
+  - Repo: https://github.com/gadfly361/rid3
+  - Demo: https://rawgit.com/gadfly361/rid3/master/dev-resources/public/examples.html
+
+### JS Interop 
+
+You'll probably need to know how to do interop with js: 
+http://www.spacjer.com/blog/2014/09/12/clojurescript-javascript-interop/
+
+Perhaps use this library to make it even easier:
+https://github.com/binaryage/cljs-oops
 
 ### Advanced Lifecycle Methods
 
 If you mess around with lifecycle methods, you'll probably want to read Martin's explanations:
 https://www.martinklepsch.org/posts/props-children-and-component-lifecycle-in-reagent.html
+
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->

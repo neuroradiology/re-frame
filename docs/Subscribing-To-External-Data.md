@@ -1,22 +1,11 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table Of Contents
 
-- [Subscribing to External Data](#subscribing-to-external-data)
-  * [There Can Be Only One!!](#there-can-be-only-one--)
-  * [Components Don't Know, Don't Care](#components-don-t-know--don-t-care)
-  * [A 2nd Source](#a-2nd-source)
-  * [Via A Subscription](#via-a-subscription)
-  * [The Subscription Handler's Job](#the-subscription-handler-s-job)
-  * [Some Code](#some-code)
-  * [Any Good?](#any-good-)
-  * [Warning: Undo/Redo](#warning--undo-redo)
-  * [Query De-duplication](#query-de-duplication)
-  * [Thanks To](#thanks-to)
-- [The Alternative Approach](#the-alternative-approach)
-- [Absolutely Never Do This](#absolutely-never-do-this)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+>  This document will soon be retired, and you probably shouldn't be reading it. It may mislead you. <br> <br>
+>  It documents an approach we experiemented with early, before realising it was probably wrong, but we haven't yet transfered the knowledge it contains to some other, less central place. So here is still sits. <br>
+>  <br>
+>  The RIGHT WAY in think can be found in FAQs like: <br>
+>  1. https://github.com/day8/re-frame/blob/master/docs/FAQs/LoadOnMount.md  <br>
+>  2. https://github.com/day8/re-frame/blob/master/docs/FAQs/PollADatabaseEvery60.md  <br>
+>  3. https://github.com/day8/re-frame-http-fx
 
 ## Subscribing to External Data
 
@@ -135,8 +124,8 @@ Enough fluffing about with words, here's a code sketch for our subscription hand
        (let  [query-token (issue-items-query!
                             type
                             :on-success #(re-frame/dispatch [:write-to  [:some :path]]))]
-         (reagent/make-reaction
-           (fn [] (get-in @app-db [:some :path] []))
+         (reagent.ratom/make-reaction
+           (fn [] (get-in @app-db [:some :path]))
            :on-dispose #(do (terminate-items-query! query-token)
                             (re-frame/dispatch [:cleanup [:some :path]]))))))
 ```
@@ -197,7 +186,7 @@ it wouldn't be available in this useful way.
 
 This technique caches remote data in `app-db`.  Be sure to exclude this 
 cache area from any undo/redo operations 
-using [the available configuration options](https://github.com/Day8/re-frame-undo#harvesting-and-re-instating)
+using [the available configuration options](https://github.com/day8/re-frame-undo#harvesting-and-re-instating)
 
 ### Query De-duplication 
 
@@ -259,3 +248,9 @@ Use one of the two alternatives described above.
 
 Previous:  [Talking to Servers](Talking-To-Servers.md)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Up:  [Index](README.md)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+## Table Of Contents
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->

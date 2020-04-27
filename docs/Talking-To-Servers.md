@@ -1,16 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table Of Contents
-
-- [Talking To Servers](#talking-to-servers)
-- [Triggering The Request](#triggering-the-request)
-- [The Event Handler](#the-event-handler)
-  - [Version 1](#version-1)
-  - [Successful GET](#successful-get)
-  - [Problems In Paradise?](#problems-in-paradise)
-  - [Version 2](#version-2)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Talking To Servers 
 
@@ -88,7 +75,7 @@ Further Notes:
 ### Successful GET
 
 As we noted above, the on-success handler itself is just
-`(dispatch [:process-response RESPONSE])`.  So we'll need to register a handler
+`#(dispatch [:process-response RESPONSE])`.  So we'll need to register a handler
 for this event too.
 
 Like this:
@@ -123,7 +110,7 @@ and [Effects](Effects.md).
 
 In the 2nd version, we use the alternative registration function, `reg-event-fx` , and we'll use an 
 "Effect Handler" supplied by this library 
-[https://github.com/Day8/re-frame-http-fx](https://github.com/Day8/re-frame-http-fx).
+[https://github.com/day8/re-frame-http-fx](https://github.com/day8/re-frame-http-fx).
 You may soon feel confident enough to write your own.
  
 Here's our rewrite:
@@ -143,6 +130,7 @@ Here's our rewrite:
     ;; we return a map of (side) effects
     {:http-xhrio {:method          :get
                   :uri             "http://json.my-endpoint.com/blah"
+                  :format          (ajax/json-request-format)
                   :response-format (ajax/json-response-format {:keywords? true}) 
                   :on-success      [:process-response]
                   :on-failure      [:bad-response]}
@@ -160,3 +148,9 @@ Notes:
 Previous:  [Loading Initial Data](Loading-Initial-Data.md)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Up:  [Index](README.md)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 Next:  [Subscribing to External Data](Subscribing-To-External-Data.md)  
+
+
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
